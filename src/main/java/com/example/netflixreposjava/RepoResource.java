@@ -20,7 +20,7 @@ public class RepoResource {
     public LinkedHashMap<String, Integer> getBottomNForks(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
         // http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/forks?n=5
 
-        List<NetflixRepo> repoList = getRepos();
+        List<NetflixRepo> repoList = getAllPagesRepos();
 
         LinkedHashMap<String, Integer> res = new LinkedHashMap<>();
         // max heap
@@ -44,7 +44,7 @@ public class RepoResource {
     public LinkedHashMap<String, String> getBottomNLastUpdates(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
         // http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/last_updated?n=5
 
-        List<NetflixRepo> repoList = getRepos();
+        List<NetflixRepo> repoList = getAllPagesRepos();
 
         LinkedHashMap<String, String> res = new LinkedHashMap<>();
         // max heap
@@ -68,7 +68,7 @@ public class RepoResource {
     public LinkedHashMap<String, Integer> getBottomNOpenIssues(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
         // http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/open_issues?n=5
 
-        List<NetflixRepo> repoList = getRepos();
+        List<NetflixRepo> repoList = getAllPagesRepos();
 
         LinkedHashMap<String, Integer> res = new LinkedHashMap<>();
         // max heap
@@ -92,7 +92,7 @@ public class RepoResource {
     public LinkedHashMap<String, Integer> getBottomNStars(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
         // http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/stars?n=5
 
-        List<NetflixRepo> repoList = getRepos();
+        List<NetflixRepo> repoList = getAllPagesRepos();
 
         LinkedHashMap<String, Integer> res = new LinkedHashMap<>();
         // max heap
@@ -110,10 +110,42 @@ public class RepoResource {
         return res;
     }
 
-    public List<NetflixRepo> getRepos() throws IOException, NoSuchAlgorithmException, KeyManagementException {
+    List<NetflixRepo> getAllPagesRepos() throws IOException, NoSuchAlgorithmException, KeyManagementException {
         String github_url = "https://github.com";
         String repo_endpoint  = "/orgs/Netflix/repositories";
         String repo_buffer = getBufferFromUrl(github_url + repo_endpoint);
+        List<NetflixRepo> repoList = getRepos(repo_buffer);
+        Set<String> pagination_urls = getPaginationUrlSuffixes(repo_buffer);
+        for (String url_suffix : pagination_urls) {
+            repo_buffer = getBufferFromUrl(github_url + url_suffix);
+            repoList.addAll(getRepos(repo_buffer));
+        }
+        System.out.println("repo list size: " + repoList.size());
+        return repoList;
+    }
+
+    Set<String> getPaginationUrlSuffixes(String repo_buffer) {
+        Set<String> res = new HashSet<>();
+        String pagination_mark = "pagination";
+        String pagination_url_mark = "href=\"";
+        int index = repo_buffer.indexOf(pagination_mark);
+        repo_buffer = repo_buffer.substring(index + 1);
+        String end_mark = "</div>";
+        int end = repo_buffer.indexOf(end_mark);
+        repo_buffer = repo_buffer.substring(0, end);
+        index = repo_buffer.indexOf(pagination_url_mark);
+        while (index >= 0) {
+            repo_buffer = repo_buffer.substring(index + pagination_url_mark.length());
+            end = repo_buffer.indexOf("\"");
+            String pagination_url = repo_buffer.substring(0, end);
+            System.out.println("pagination url: " + pagination_url);
+            res.add(pagination_url);
+            index = repo_buffer.indexOf(pagination_url_mark);
+        }
+        return res;
+    }
+
+    public List<NetflixRepo> getRepos(String repo_buffer) {
         List<NetflixRepo> repoList = new ArrayList<>();
         String name_mark = "class=\"d-inline-block\"";
         String fork_mark = "aria-label=\"fork\"";
@@ -191,6 +223,5 @@ public class RepoResource {
         }
         return repoList;
     }
-
 
 }
