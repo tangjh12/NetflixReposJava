@@ -7,6 +7,7 @@ Once starting the Glassfish server, there should be a "Hello world" prompt showi
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/hello-world
 
 One can visit the following endpoint for health check:
+
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/health-check
 
 If using IntelliJ Idea, one can change the port number by clicking Run->edit configuration and modify the port in the URL. 
@@ -18,6 +19,7 @@ but the disadvantage is that it will increase more processing time. I will try t
 One can view all Netflix members by visiting this endpoint:
 
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/orgs/Netflix/members
+Data for /orgs/Netflix/members will be cached periodically for every 500 seconds.
 
 One can view the bottom N repository results (including all pages) based on forks/stars/open issues/last updates via the following endpoints:
 
@@ -32,7 +34,7 @@ http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/last_updat
 Note that one can specify N as a query param in the endpoints. For all endpoints, we prefer to use Chrome to load the page faster.
 
 TODO (will work on them incrementally)
-1. Take a look at tests
-2. Cache the following endpoints periodically
-1) /orgs/Netflix/members
-2) /orgs/Netflix/repos
+1. Try using Github APIs to get members and repositories
+2. Take a look at tests
+3. Cache the following endpoints periodically
+1) /orgs/Netflix/repos
