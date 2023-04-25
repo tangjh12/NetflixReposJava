@@ -14,7 +14,7 @@ import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
 
 @Path("/orgs/Netflix")
 public class MemberResource {
-    private static LinkedHashSet<String> people_cache;
+    private static String people_cache;
     private static Timestamp timestamp;
     // cache data for every 500 seconds.
     private static final int update_period_in_ms = 500000;
@@ -22,13 +22,10 @@ public class MemberResource {
     @Path("/members")
     @GET
     @Produces("application/json")
-    public LinkedHashSet<String> getPeopleFromCache() throws IOException, NoSuchAlgorithmException, KeyManagementException {
+    public String getMemberResource() throws IOException, NoSuchAlgorithmException, KeyManagementException {
         Timestamp current_ts = new Timestamp(System.currentTimeMillis());
         if (people_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            String github_url = "https://github.com";
-            String people_endpoint  = "/orgs/Netflix/people";
-            String people_buffer = getBufferFromUrl(github_url + people_endpoint);
-            people_cache = getMembers(people_buffer);
+            people_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/members");
             timestamp = current_ts;
         }
         return people_cache;
