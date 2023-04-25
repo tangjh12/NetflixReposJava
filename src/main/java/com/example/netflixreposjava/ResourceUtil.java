@@ -9,7 +9,6 @@ import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.Map;
 
 public class ResourceUtil {
@@ -33,25 +32,36 @@ public class ResourceUtil {
         HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
         /* End of the fix*/
 
-        URL url1 = new URL(url);
-        URLConnection con = url1.openConnection();
-        // pass GITHUB_API_TOKEN in request header
-        Map<String, String> env_map = System.getenv();
-        if (env_map.containsKey("GITHUB_API_TOKEN")) {
-            String authorization = env_map.get("GITHUB_API_TOKEN");
-            System.out.println("github api token: " + authorization);
-            byte[] encodedBytes = Base64.getEncoder().encode(authorization.getBytes());
-            authorization = "token " + new String(encodedBytes);
-            con.setRequestProperty("Authorization", authorization);
-        }
-
         StringBuilder stringBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                stringBuilder.append(line);
-            }
-        }
 
+        while (true) {
+            URL url1 = new URL(url);
+            URLConnection con = url1.openConnection();
+            // pass GITHUB_API_TOKEN in request header
+            Map<String, String> env_map = System.getenv();
+            if (env_map.containsKey("GITHUB_API_TOKEN")) {
+                String authorization = env_map.get("GITHUB_API_TOKEN");
+                con.setRequestProperty("Authorization", "Bearer " + authorization);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
+                for (String line; (line = reader.readLine()) != null;) {
+                    stringBuilder.append(line);
+                }
+            }
+
+            String link_value = con.getHeaderField("Link");
+            if (link_value == null || !link_value.contains("next")) {
+                break;
+            }
+            int prev = link_value.indexOf("prev");
+            if (prev >= 0) {
+                link_value = link_value.substring(prev);
+            }
+            int begin = link_value.indexOf('<'), end = link_value.indexOf('>');
+            url = link_value.substring(begin + 1, end);
+        }
+        
         return stringBuilder.toString();
     }
 

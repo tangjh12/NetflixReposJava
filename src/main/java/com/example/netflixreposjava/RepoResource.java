@@ -13,14 +13,27 @@ import java.util.*;
 
 import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
 
-@Path("/view/bottom/N")
+@Path("/orgs/Netflix/repos")
 public class RepoResource {
     private static List<NetflixRepo> repo_cache;
+    private static String repo_str_cache;
     private static Timestamp timestamp;
     // update cache for every 300 seconds.
-    private static final int update_period_in_ms = 300000;
+    private static final int update_period_in_ms = 30000000;
 
-    @Path("/forks")
+    @GET
+    @Produces("application/json")
+    public String getRepoStr() throws IOException, NoSuchAlgorithmException, KeyManagementException {
+        Timestamp current_ts = new Timestamp(System.currentTimeMillis());
+        if (repo_str_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
+            repo_str_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/repos");
+            timestamp = current_ts;
+        }
+        return repo_str_cache;
+    }
+
+
+    @Path("view/bottom/N/forks")
     @GET
     @Produces("application/json")
     public LinkedHashMap<String, Integer> getBottomNForks(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
@@ -44,7 +57,7 @@ public class RepoResource {
         return res;
     }
 
-    @Path("/last_updated")
+    @Path("view/bottom/N/last_updated")
     @GET
     @Produces("application/json")
     public LinkedHashMap<String, String> getBottomNLastUpdates(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
@@ -68,7 +81,7 @@ public class RepoResource {
         return res;
     }
 
-    @Path("/open_issues")
+    @Path("view/bottom/N/open_issues")
     @GET
     @Produces("application/json")
     public LinkedHashMap<String, Integer> getBottomNOpenIssues(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
@@ -92,7 +105,7 @@ public class RepoResource {
         return res;
     }
 
-    @Path("/stars")
+    @Path("view/bottom/N/stars")
     @GET
     @Produces("application/json")
     public LinkedHashMap<String, Integer> getBottomNStars(@QueryParam("n")int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {

@@ -24,9 +24,7 @@ public class BaseResource {
         if (base_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
             base_cache = getBufferFromUrl("https://api.github.com/");
             timestamp = current_ts;
-            System.out.println("not get base from cache");
         }
-        System.out.println("get base from cache");
         return base_cache;
     }
 }

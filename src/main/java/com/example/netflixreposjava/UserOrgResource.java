@@ -16,7 +16,7 @@ import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
 
 @Path("/users")
 public class UserOrgResource {
-    private static Map<String, String> user_org_cache = new HashMap<>();
+    private static final Map<String, String> user_org_cache = new HashMap<>();
     private static Timestamp timestamp;
     // cache data for every 500 seconds.
     private static final int update_period_in_ms = 500000;

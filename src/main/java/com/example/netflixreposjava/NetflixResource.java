@@ -24,9 +24,7 @@ public class NetflixResource {
         if (netflix_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
             netflix_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix");
             timestamp = current_ts;
-            System.out.println("not get base from cache");
         }
-        System.out.println("get base from cache");
         return netflix_cache;
     }
 }
