@@ -19,6 +19,7 @@ but the disadvantage is that it will increase more processing time. I will try t
 One can view all Netflix members by visiting this endpoint:
 
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/orgs/Netflix/members
+
 Data for /orgs/Netflix/members will be cached periodically for every 500 seconds.
 
 One can view the bottom N repository results (including all pages) based on forks/stars/open issues/last updates via the following endpoints:
@@ -31,10 +32,10 @@ http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/open_issue
 
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/last_updated?n=5
 
-Note that one can specify N as a query param in the endpoints. For all endpoints, we prefer to use Chrome to load the page faster.
+Note that one can specify N as a query param in the endpoints.
+Data for /orgs/Netflix/repos will be cached periodically for every 300 seconds.
+For all endpoints, we prefer to use Chrome to load the page faster.
 
 TODO (will work on them incrementally)
 1. Try using Github APIs to get members and repositories
 2. Take a look at tests
-3. Cache the following endpoints periodically
-1) /orgs/Netflix/repos

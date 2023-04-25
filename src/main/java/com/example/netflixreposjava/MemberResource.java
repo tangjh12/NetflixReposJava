@@ -17,14 +17,14 @@ public class MemberResource {
     private static LinkedHashSet<String> people_cache;
     private static Timestamp timestamp;
     // cache data for every 500 seconds.
-    private static final int update_period_in_sec = 500000;
+    private static final int update_period_in_ms = 500000;
 
     @Path("/members")
     @GET
     @Produces("application/json")
     public LinkedHashSet<String> getPeopleFromCache() throws IOException, NoSuchAlgorithmException, KeyManagementException {
         Timestamp current_ts = new Timestamp(System.currentTimeMillis());
-        if (people_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_sec) {
+        if (people_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
             String github_url = "https://github.com";
             String people_endpoint  = "/orgs/Netflix/people";
             String people_buffer = getBufferFromUrl(github_url + people_endpoint);

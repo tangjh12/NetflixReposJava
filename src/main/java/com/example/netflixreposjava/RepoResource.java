@@ -8,12 +8,18 @@ import jakarta.ws.rs.QueryParam;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Timestamp;
 import java.util.*;
 
 import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
 
 @Path("/view/bottom/N")
 public class RepoResource {
+    private static List<NetflixRepo> repo_cache;
+    private static Timestamp timestamp;
+    // update cache for every 300 seconds.
+    private static final int update_period_in_ms = 300000;
+
     @Path("/forks")
     @GET
     @Produces("application/json")
@@ -111,17 +117,22 @@ public class RepoResource {
     }
 
     List<NetflixRepo> getAllPagesRepos() throws IOException, NoSuchAlgorithmException, KeyManagementException {
-        String github_url = "https://github.com";
-        String repo_endpoint  = "/orgs/Netflix/repositories";
-        String repo_buffer = getBufferFromUrl(github_url + repo_endpoint);
-        List<NetflixRepo> repoList = getRepos(repo_buffer);
-        Set<String> pagination_urls = getPaginationUrlSuffixes(repo_buffer);
-        for (String url_suffix : pagination_urls) {
-            repo_buffer = getBufferFromUrl(github_url + url_suffix);
-            repoList.addAll(getRepos(repo_buffer));
+        Timestamp current_ts = new Timestamp(System.currentTimeMillis());
+        if (repo_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
+            String github_url = "https://github.com";
+            String repo_endpoint  = "/orgs/Netflix/repositories";
+            String repo_buffer = getBufferFromUrl(github_url + repo_endpoint);
+            repo_cache = getRepos(repo_buffer);
+            Set<String> pagination_urls = getPaginationUrlSuffixes(repo_buffer);
+            for (String url_suffix : pagination_urls) {
+                repo_buffer = getBufferFromUrl(github_url + url_suffix);
+                repo_cache.addAll(getRepos(repo_buffer));
+            }
+            timestamp = current_ts;
+            System.out.println("repo list size for not cache: " + repo_cache.size());
         }
-        System.out.println("repo list size: " + repoList.size());
-        return repoList;
+        System.out.println("repo list size for cache: " + repo_cache.size());
+        return repo_cache;
     }
 
     Set<String> getPaginationUrlSuffixes(String repo_buffer) {
