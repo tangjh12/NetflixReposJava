@@ -6,10 +6,8 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
+
 import com.google.gson.*;
 
 import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
@@ -33,21 +31,14 @@ public class ViewBottomResource {
                         jsonObject.get("stargazers_count").getAsInt(), jsonObject.get("open_issues_count").getAsInt(),
                         jsonObject.get("updated_at").getAsString());
                 res.add(netflixRepo);
-                if (netflixRepo.name.equals("Netflix/vizceral-react")
-                || netflixRepo.name.equals("Netflix/titus-controllers-api") || netflixRepo.name.equals("Netflix/signal-wrapper")) {
-                    System.out.println("netflix repo name " + netflixRepo.name + ", last update " + netflixRepo.last_update + ", open issues " + netflixRepo.open_issues);
-                }
             }
         }
 
         return res;
     }
 
-    @Path("/{N}/forks")
-    @GET
-    @Produces("application/json")
-    public LinkedHashMap<String, Integer> getBottomNForks(@PathParam("N") int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-
+    PriorityQueue<NetflixRepo> getBottomNRepo(int n, Comparator<NetflixRepo> comparator) throws IOException, NoSuchAlgorithmException, KeyManagementException {
+        // Update cache.
         Timestamp current_ts = new Timestamp(System.currentTimeMillis());
         if (repo_str_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
             repo_str_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/repos");
@@ -55,15 +46,24 @@ public class ViewBottomResource {
             repo_cache = getRepos();
         }
 
-        LinkedHashMap<String, Integer> res = new LinkedHashMap<>();
-        // max heap
-        PriorityQueue<NetflixRepo> priorityQueue = new PriorityQueue<>(n, new ForkComparator());
+        // Max heap.
+        PriorityQueue<NetflixRepo> priorityQueue = new PriorityQueue<>(n, comparator);
         for (NetflixRepo repo : repo_cache) {
             priorityQueue.add(repo);
             if (priorityQueue.size() > n) {
                 priorityQueue.remove();
             }
         }
+        return priorityQueue;
+    }
+
+    @Path("/{N}/forks")
+    @GET
+    @Produces("application/json")
+    public LinkedHashMap<String, Integer> getBottomNForks(@PathParam("N") int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
+        PriorityQueue<NetflixRepo> priorityQueue = getBottomNRepo(n, new ForkComparator());
+
+        LinkedHashMap<String, Integer> res = new LinkedHashMap<>();
         while (!priorityQueue.isEmpty()) {
             NetflixRepo repo = priorityQueue.poll();
             res.put(repo.name, repo.forks);
@@ -75,23 +75,9 @@ public class ViewBottomResource {
     @GET
     @Produces("application/json")
     public LinkedHashMap<String, String> getBottomNLastUpdated(@PathParam("N") int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-
-        Timestamp current_ts = new Timestamp(System.currentTimeMillis());
-        if (repo_str_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            repo_str_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/repos");
-            timestamp = current_ts;
-            repo_cache = getRepos();
-        }
+        PriorityQueue<NetflixRepo> priorityQueue = getBottomNRepo(n, new LastUpdateComparator());
 
         LinkedHashMap<String, String> res = new LinkedHashMap<>();
-        // max heap
-        PriorityQueue<NetflixRepo> priorityQueue = new PriorityQueue<>(n, new LastUpdateComparator());
-        for (NetflixRepo repo : repo_cache) {
-            priorityQueue.add(repo);
-            if (priorityQueue.size() > n) {
-                priorityQueue.remove();
-            }
-        }
         while (!priorityQueue.isEmpty()) {
             NetflixRepo repo = priorityQueue.poll();
             res.put(repo.name, repo.last_update);
@@ -103,23 +89,9 @@ public class ViewBottomResource {
     @GET
     @Produces("application/json")
     public LinkedHashMap<String, Integer> getBottomNOpenIssues(@PathParam("N") int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-
-        Timestamp current_ts = new Timestamp(System.currentTimeMillis());
-        if (repo_str_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            repo_str_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/repos");
-            timestamp = current_ts;
-            repo_cache = getRepos();
-        }
+        PriorityQueue<NetflixRepo> priorityQueue = getBottomNRepo(n, new OpenIssueComparator());
 
         LinkedHashMap<String, Integer> res = new LinkedHashMap<>();
-        // max heap
-        PriorityQueue<NetflixRepo> priorityQueue = new PriorityQueue<>(n, new OpenIssueComparator());
-        for (NetflixRepo repo : repo_cache) {
-            priorityQueue.add(repo);
-            if (priorityQueue.size() > n) {
-                priorityQueue.remove();
-            }
-        }
         while (!priorityQueue.isEmpty()) {
             NetflixRepo repo = priorityQueue.poll();
             res.put(repo.name, repo.open_issues);
@@ -131,23 +103,9 @@ public class ViewBottomResource {
     @GET
     @Produces("application/json")
     public LinkedHashMap<String, Integer> getBottomNStars(@PathParam("N") int n) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-
-        Timestamp current_ts = new Timestamp(System.currentTimeMillis());
-        if (repo_str_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            repo_str_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/repos");
-            timestamp = current_ts;
-            repo_cache = getRepos();
-        }
+        PriorityQueue<NetflixRepo> priorityQueue = getBottomNRepo(n, new StarComparator());
 
         LinkedHashMap<String, Integer> res = new LinkedHashMap<>();
-        // max heap
-        PriorityQueue<NetflixRepo> priorityQueue = new PriorityQueue<>(n, new StarComparator());
-        for (NetflixRepo repo : repo_cache) {
-            priorityQueue.add(repo);
-            if (priorityQueue.size() > n) {
-                priorityQueue.remove();
-            }
-        }
         while (!priorityQueue.isEmpty()) {
             NetflixRepo repo = priorityQueue.poll();
             res.put(repo.name, repo.stars);

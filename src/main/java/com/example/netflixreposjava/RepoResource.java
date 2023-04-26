@@ -8,13 +8,11 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
-import java.util.*;
 
 import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
 
 @Path("/orgs/Netflix/repos")
 public class RepoResource {
-    private static List<NetflixRepo> repo_cache;
     private static String repo_str_cache;
     private static Timestamp timestamp;
     // update cache for every 300 seconds.

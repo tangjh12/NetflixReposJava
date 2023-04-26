@@ -1,41 +1,56 @@
 # NetflixReposJava
-I followed [this link](https://www.jetbrains.com/help/idea/creating-and-running-your-first-restful-web-service.html)
-to build my first Java web service using Jakarta EE 10 and Glassfish 7 in IntelliJ Idea 2023. 
-Note that only Ultimate (not Community Edition) can support web services. 
-
-Once starting the Glassfish server, there should be a "Hello world" prompt showing up at this endpoint:
+## How to build/run/test the service?
+1. Clone this project
+2. Run "mvn clean install"
+3. Follow [this link](https://www.jetbrains.com/help/idea/creating-and-running-your-first-restful-web-service.html)
+to build the web service using Jakarta EE 10 and Glassfish 7 in IntelliJ Idea 2023. Note that only Ultimate (not Community Edition) can support web services. 
+4. Once starting the Glassfish server, there should be a "Hello world" prompt showing up at this endpoint:
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/hello-world
+5. Please use "test.sh" in the "test/" folder to run tests. I got all tests passed in my local environment.
 
-One can visit the following endpoint for health check:
-
+## How to do health check?
+One can visit the following endpoint (HealthCheckResource) for health check:
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/health-check
 
-If using IntelliJ Idea, one can change the port number by clicking Run->edit configuration and modify the port in the URL. 
+## How to config port?
+If using IntelliJ Idea, one can change the port number by clicking "Run->edit configuration" and modify the port in the URL field of the prompt. 
 
-Initially I did not realize that there are Github APIs to list all repositories. So I just curled all pages and extracted 
-relevant information all by myself. The advantage is that it will less likely hit the rate limit (though I passed GITHUB_API_TOKEN env variable in the request header), 
-but the disadvantage is that it will increase more processing time. I will try those APIs once having more time. 
+## What about rate limiting?
+The service reads the GITHUB_API_TOKEN env variable (see ResourceUtil) and pass it in the HTTP header for authorization to overcome rate-limit restrictions. 
 
-One can view all Netflix members by visiting this endpoint:
+## What other endpoints does the service support?
+The following endpoints are supported and cached periodically:
 
+1. "/" (BaseResource)
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/
+2. "/orgs/Netflix/members" (MemberResource)
 http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/orgs/Netflix/members
+3. "/orgs/Netflix" (NetflixResource)
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/orgs/Netflix
+4. "/orgs/Netflix/repos" (RepoResource)
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/orgs/Netflix/repos
+5. "/users/{userName}/orgs" (UserOrgResource)
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/users/{userName}/orgs
+6. "/view/bottom/{N}" (ViewBottomResource)
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/{N}/forks
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/{N}/stars
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/{N}/open_issues
+http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/{N}/last_updated
 
-Data for /orgs/Netflix/members will be cached periodically for every 500 seconds.
-
-One can view the bottom N repository results (including all pages) based on forks/stars/open issues/last updates via the following endpoints:
-
-http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/forks?n=5
-
-http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/stars?n=5
-
-http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/open_issues?n=5
-
-http://localhost:8080/NetflixReposJava-1.0-SNAPSHOT/api/view/bottom/N/last_updated?n=5
-
-Note that one can specify N as a query param in the endpoints.
-Data for /orgs/Netflix/repos will be cached periodically for every 300 seconds.
 For all endpoints, we prefer to use Chrome to load the page faster.
 
-TODO (will work on them incrementally)
-1. Try using Github APIs to get members and repositories
-2. Take a look at tests
+## What are design decisions/trade-offs being made here?
+For "/view/bottom/{N}" endpoints, I cached all repos as a list of NetflixRepo objects, there are two ways moving forward (assume m = number of Netflix repos):
+1. Don't do more in the caching part, whenever a "/view/bottom/{N}" request comes in, just compute the bottom N from the cache using priority queue.
+
+Time complexity: O(mLogN)
+
+Space complexity: O(m)
+
+2. Have one more cache per sorting method, i.e. fork_cache to sort by forks. When we need to update cache, we also sort all the caches based on those comparators, then we just return the bottom N items from the cache.
+
+Time complexity: O(4 * mLogm) when updating the cache; O(N) when not updating the cache (i.e. when requests come within the caching period)
+
+Space complexity: O(5 * m)
+
+The trade-off is basically between time and space. I tried both (the current implementation uses the first option) and did not see much difference in terms of latency since everything happens in memory (when there is no need to update the cache). I think it's because m is relatively small (O(300)). The diff could be more obvious when it comes to 10k or 100k repos. 

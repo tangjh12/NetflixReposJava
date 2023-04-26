@@ -42,7 +42,7 @@ public class ResourceUtil {
             URL url1 = new URL(url);
             URLConnection con = url1.openConnection();
 
-            // pass GITHUB_API_TOKEN in request header
+            // pass GITHUB_API_TOKEN in request header.
             Map<String, String> env_map = System.getenv();
             if (env_map.containsKey("GITHUB_API_TOKEN")) {
                 con.setRequestProperty("Authorization", "Bearer " + env_map.get("GITHUB_API_TOKEN"));
@@ -55,6 +55,7 @@ public class ResourceUtil {
             }
             res.add(stringBuilder.toString());
 
+            // Curl next page.
             String link_value = con.getHeaderField("Link");
             if (link_value == null || !link_value.contains("next")) {
                 break;
