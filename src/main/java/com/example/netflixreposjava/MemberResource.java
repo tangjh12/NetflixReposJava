@@ -9,6 +9,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
 
@@ -25,28 +26,12 @@ public class MemberResource {
     public String getMemberResource() throws IOException, NoSuchAlgorithmException, KeyManagementException {
         Timestamp current_ts = new Timestamp(System.currentTimeMillis());
         if (people_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            people_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/members");
+            people_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix/members").get(0);
             timestamp = current_ts;
         }
         return people_cache;
     }
 
-    LinkedHashSet<String> getMembers(String buffer) {
-        LinkedHashSet<String> res = new LinkedHashSet<>();
-        String mark = "alt=\"@";
-        int index = buffer.indexOf(mark);
-        while (index >= 0) {
-            buffer = buffer.substring(index + mark.length());
-            index = buffer.indexOf("\"");
-            String member = buffer.substring(0, index);
-            if (!member.equals("Netflix")) {
-                res.add(member);
-            }
-            buffer = buffer.substring(index + 1);
-            index = buffer.indexOf(mark);
-        }
-        return res;
-    }
 }
 
 

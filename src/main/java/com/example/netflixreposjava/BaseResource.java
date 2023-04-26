@@ -22,7 +22,7 @@ public class BaseResource {
     public String getBaseResource() throws IOException, NoSuchAlgorithmException, KeyManagementException {
         Timestamp current_ts = new Timestamp(System.currentTimeMillis());
         if (base_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            base_cache = getBufferFromUrl("https://api.github.com/");
+            base_cache = getBufferFromUrl("https://api.github.com/").get(0);
             timestamp = current_ts;
         }
         return base_cache;

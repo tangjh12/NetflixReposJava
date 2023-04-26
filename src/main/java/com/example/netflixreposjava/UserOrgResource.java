@@ -26,7 +26,7 @@ public class UserOrgResource {
     public String getUserOrgResource(@PathParam("userName") String user_name) throws IOException, NoSuchAlgorithmException, KeyManagementException {
         Timestamp current_ts = new Timestamp(System.currentTimeMillis());
         if (!user_org_cache.containsKey(user_name) || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            user_org_cache.put(user_name, getBufferFromUrl("https://api.github.com/users/" + user_name + "/orgs"));
+            user_org_cache.put(user_name, getBufferFromUrl("https://api.github.com/users/" + user_name + "/orgs").get(0));
             timestamp = current_ts;
         }
         return user_org_cache.get(user_name);

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
+import java.util.List;
 
 import static com.example.netflixreposjava.ResourceUtil.getBufferFromUrl;
 
@@ -22,7 +23,7 @@ public class NetflixResource {
     public String getNetflixResource() throws IOException, NoSuchAlgorithmException, KeyManagementException {
         Timestamp current_ts = new Timestamp(System.currentTimeMillis());
         if (netflix_cache == null || timestamp == null || current_ts.getTime() - timestamp.getTime() > update_period_in_ms) {
-            netflix_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix");
+            netflix_cache = getBufferFromUrl("https://api.github.com/orgs/Netflix").get(0);
             timestamp = current_ts;
         }
         return netflix_cache;
